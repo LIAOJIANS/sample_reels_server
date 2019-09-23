@@ -14,7 +14,7 @@ conn.on('connected', () => {
     console.log('链接数据库成功咯！')
 })
 
-const workLists =mongoose.Schema({
+const workLists = mongoose.Schema({
     workName: { type: String, require: true },
     workSrc: { type: String, require: true },
     workImg: { type: String, require: true },
@@ -27,3 +27,9 @@ const WorkLists = mongoose.model('works', workLists)
 
 // 2.3 向外暴露一个Model
 exports.WorkLists = WorkLists // 用户信息Model
+
+const admin = mongoose.Schema({
+    adminPwd: { type: String, require:true }
+})
+const AdminPwd = mongoose.model('admin', admin)
+exports.AdminPwd = AdminPwd

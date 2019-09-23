@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const multer  = require('multer')
 
-const { WorkLists } = require('../db/model')
+const { WorkLists, AdminPwd } = require('../db/model')
 const fs = require('fs');
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -30,8 +30,34 @@ var upload = multer({ storage: storage });
 
 var uploadFolder = './public/uploads/';
 createFolder(uploadFolder);
+
+// 管理员校验
+router.post('/pwd', function (req, res) {
+    const adminPwd = req.body.adminPwd
+    AdminPwd.findOne({ adminPwd }, function (err, admin) {
+        if (admin) {
+            res.cookie('adminId', admin._id, { maxAge: 1000*60*60*24 })
+            res.send({ code: 0, data: admin })
+        } else {
+            res.send({ code: 1, msg: '操作码不正确！' }) // 返回信息
+        }
+    })
+});
+
+// 登录管理员
+router.post('/admin', function (req, res) {
+    const { adminPwd } = req.body
+    new AdminPwd({ adminPwd }).save(function (err, admin) {
+        res.send({ code: 0, msg: '注册成功！'})
+    })
+});
+
 // 添加项目
 router.post('/addWork', upload.single('file'), function(req, res) {
+    const adminId = req.cookies.adminId
+    if (!adminId) {
+        return res.send({ code: 1, msg: '请输入操作码，再进行操作' })
+    }
     const { workName, workSrc, workIntroduction, workContent } = req.body
     const file = req.file
     const workImg = 'http://localhost:4000/' + file.path
@@ -41,10 +67,23 @@ router.post('/addWork', upload.single('file'), function(req, res) {
         res.send({ code: 0, msg: '上传成功！'})
     })
 });
+
 // 作品列表
 router.get('/workList', function (req, res) {
     WorkLists.find(function (err, list) {
         res.send({ code: 0, data: list })
     })
+});
+
+// 查看管理员是否登录
+router.get('/adminInfo', function (req, res) {
+    const adminId = req.cookies.adminId
+    if (!adminId) {
+        return res.send({ code: 1, msg: '未登录' })
+    } else {
+        return res.send({ code: 0, data: { login: true } })
+    }
 })
+
+
 module.exports = router;
