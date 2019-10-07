@@ -85,5 +85,16 @@ router.get('/adminInfo', function (req, res) {
     }
 })
 
+// // 更改项目
+// router.post('/workUpdata', upload.single('file'), function (req, res) {
+//     const adminId = req.cookies.adminId
+//     if (!adminId) {
+//         return res.send({ code: 1, msg: '未登录' })
+//     }
+//     const { workName, workSrc, workIntroduction, workContent } = req.body
+//     const file = req.file
+//     const workImg = 'http://localhost:4000/' + file.path
+//
+// })
 
 module.exports = router;
