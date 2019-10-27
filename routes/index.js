@@ -32,7 +32,7 @@ var uploadFolder = './public/uploads/';
 createFolder(uploadFolder);
 
 // 管理员校验
-router.post('/pwd', function (req, res) {
+router.post('/api/pwd', function (req, res) {
     const adminPwd = req.body.adminPwd
     AdminPwd.findOne({ adminPwd }, function (err, admin) {
         if (admin) {
@@ -44,9 +44,10 @@ router.post('/pwd', function (req, res) {
     })
 });
 
-// 登录管理员
-router.post('/admin', function (req, res) {
+// 注册管理员
+router.post('/api/admin', function (req, res) {
     const { adminPwd } = req.body
+
     new AdminPwd({ adminPwd }).save(function (err, admin) {
         res.send({ code: 0, msg: '注册成功！'})
     })
@@ -54,13 +55,13 @@ router.post('/admin', function (req, res) {
 
 // 添加项目
 router.post('/addWork', upload.single('file'), function(req, res) {
-    const adminId = req.cookies.adminId
-    if (!adminId) {
+    // const adminId = req.cookies.adminId
+    const { workName, workSrc, workIntroduction, workContent, isLogin } = req.body
+    if (!isLogin) {
         return res.send({ code: 1, msg: '请输入操作码，再进行操作' })
     }
-    const { workName, workSrc, workIntroduction, workContent } = req.body
     const file = req.file
-    const workImg = 'http://localhost:4000/' + file.path
+    const workImg = 'http://106.53.70.87:4001/' + file.path
     // 储存数据库
     new WorkLists({ workName, workSrc, workIntroduction, workContent, workImg }).save(function (err, list) {
         // 提交成功返回给前端
@@ -69,14 +70,24 @@ router.post('/addWork', upload.single('file'), function(req, res) {
 });
 
 // 作品列表
-router.get('/workList', function (req, res) {
-    WorkLists.find(function (err, list) {
-        res.send({ code: 0, data: list })
+router.get('/api/workList', function (req, res) {
+    let countIp = 0
+    AdminPwd.find(function(err, count) {
+        if(count){
+            countIp = count[0].countIp + 1
+            AdminPwd.findByIdAndUpdate({  _id: count[0]._id }, { countIp: countIp*1 }, function (err, a) {
+                if(!err) {
+                    WorkLists.find(function (err, list) {
+                        res.send({ code: 0, data: list, count: countIp })
+                    })
+                }
+            })
+        }
     })
 });
 
 // 查看管理员是否登录
-router.get('/adminInfo', function (req, res) {
+router.get('/api/adminInfo', function (req, res) {
     const adminId = req.cookies.adminId
     if (!adminId) {
         return res.send({ code: 1, msg: '未登录' })
@@ -96,5 +107,22 @@ router.get('/adminInfo', function (req, res) {
 //     const workImg = 'http://localhost:4000/' + file.path
 //
 // })
+
+// 删除项目
+router.post('/api/delWork', function (req, res) {
+
+    const adminId = req.cookies.adminId
+    if (!adminId) {
+        return res.send({ code: 1, msg: '未登录' })
+    }
+    const { id } = req.body
+    WorkLists.remove({ _id: id }, function (err, work) {
+        if(!err) {
+            res.send({ code: 0, msg: '删除成功！'})
+        } else {
+            res.send({ code: 0, msg: '删除失败', err})
+        }
+    })
+})
 
 module.exports = router;

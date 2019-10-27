@@ -29,7 +29,8 @@ const WorkLists = mongoose.model('works', workLists)
 exports.WorkLists = WorkLists // 用户信息Model
 
 const admin = mongoose.Schema({
-    adminPwd: { type: String, require:true }
+    adminPwd: { type: String, require:true },
+    countIp: { type: Number }
 })
 const AdminPwd = mongoose.model('admin', admin)
 exports.AdminPwd = AdminPwd
